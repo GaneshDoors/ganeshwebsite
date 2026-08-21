@@ -5575,3 +5575,7 @@ textarea {
     min-height: 44px;
   }
 }
+/* Remove lightbox close button completely */
+.close-lightbox {
+  display: none !important;
+}
