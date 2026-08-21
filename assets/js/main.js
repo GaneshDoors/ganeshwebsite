@@ -114,98 +114,216 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============================================================
-   PREMIUM LIGHTBOX
-   UNIVERSAL SMARTPHONE / TABLET / DESKTOP
+   PREMIUM LIGHTBOX — UNIVERSAL RESPONSIVE VERSION
+   Exact center on mobile, tablet and desktop
 ============================================================ */
 
-const productImg =
-  document.getElementById("productImg");
+const productImg = document.getElementById("productImg");
+const lightbox = document.getElementById("lightbox");
+const lightboxImg = document.getElementById("lightboxImg");
+const overlay = document.querySelector(".lightbox-overlay");
+const closeBtn = document.querySelector(".close-lightbox");
 
-const lightbox =
-  document.getElementById("lightbox");
-
-const lightboxImg =
-  document.getElementById("lightboxImg");
-
-const overlay =
-  document.querySelector(".lightbox-overlay");
-
-const closeBtn =
-  document.querySelector(".close-lightbox");
+let lightboxClosing = false;
 
 
 /* ============================================================
-   GET IMAGE SIZE
+   INITIALIZE
+============================================================ */
+
+if (
+  productImg &&
+  lightbox &&
+  lightboxImg &&
+  overlay &&
+  closeBtn
+) {
+
+  /* Always keep lightbox directly under body */
+  if (lightbox.parentElement !== document.body) {
+    document.body.appendChild(lightbox);
+  }
+
+
+  /* Open */
+  productImg.addEventListener("click", openLightbox);
+
+
+  /* Click outside image */
+  overlay.addEventListener("click", function (event) {
+
+    if (event.target === overlay) {
+      closeLightbox();
+    }
+
+  });
+
+
+  /* Close button */
+  closeBtn.addEventListener("click", function (event) {
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    closeLightbox();
+
+  });
+
+
+  /* Escape key */
+  document.addEventListener("keydown", function (event) {
+
+    if (
+      event.key === "Escape" &&
+      lightbox.classList.contains("show")
+    ) {
+      closeLightbox();
+    }
+
+  });
+
+
+  /* Keep position correct after browser resize/orientation */
+  window.addEventListener(
+    "resize",
+    function () {
+
+      if (
+        lightbox.classList.contains("show") &&
+        !lightboxClosing
+      ) {
+        centerLightboxImage();
+      }
+
+    },
+    { passive: true }
+  );
+
+
+  /* Android visual viewport changes */
+  if (window.visualViewport) {
+
+    window.visualViewport.addEventListener(
+      "resize",
+      function () {
+
+        if (
+          lightbox.classList.contains("show") &&
+          !lightboxClosing
+        ) {
+          centerLightboxImage();
+        }
+
+      },
+      { passive: true }
+    );
+
+  }
+
+}
+
+
+/* ============================================================
+   GET LIGHTBOX SIZE
 ============================================================ */
 
 function getLightboxSize() {
 
-  if (!productImg || !lightboxImg) {
+  if (!lightbox) return null;
+
+  const rect =
+    lightbox.getBoundingClientRect();
+
+  return {
+    left: rect.left,
+    top: rect.top,
+    width: lightbox.clientWidth,
+    height: lightbox.clientHeight
+  };
+
+}
+
+
+/* ============================================================
+   CALCULATE FINAL IMAGE SIZE
+   Same size proportions as your current version
+============================================================ */
+
+function getLightboxImageSize() {
+
+  if (!lightbox || !lightboxImg || !productImg) {
     return null;
   }
 
 
-  const viewportWidth =
-    window.visualViewport
-      ? window.visualViewport.width
-      : window.innerWidth;
+  const viewport =
+    getLightboxSize();
 
-  const viewportHeight =
-    window.visualViewport
-      ? window.visualViewport.height
-      : window.innerHeight;
+  if (!viewport) {
+    return null;
+  }
 
+
+  const vw =
+    viewport.width;
+
+  const vh =
+    viewport.height;
+
+
+  /* ----------------------------------------
+     Mobile
+  ---------------------------------------- */
 
   const isMobile =
-    viewportWidth <= 767;
+    vw <= 767;
+
+
+  /* ----------------------------------------
+     Tablet
+  ---------------------------------------- */
 
   const isTablet =
-    viewportWidth >= 768 &&
-    viewportWidth <= 1199;
+    vw >= 768 &&
+    vw <= 1199;
 
 
   let maxWidth;
   let maxHeight;
 
 
-  /* MOBILE */
-
   if (isMobile) {
 
     maxWidth =
-      viewportWidth * 0.85;
+      vw * 0.85;
 
     maxHeight =
-      viewportHeight * 0.82;
-
-  }
+      vh * 0.82;
 
 
-  /* TABLET */
-
-  else if (isTablet) {
+  } else if (isTablet) {
 
     maxWidth =
-      viewportWidth * 0.70;
+      vw * 0.70;
 
     maxHeight =
-      viewportHeight * 0.74;
-
-  }
+      vh * 0.74;
 
 
-  /* DESKTOP */
-
-  else {
+  } else {
 
     maxWidth =
-      viewportWidth * 0.85;
+      vw * 0.85;
 
     maxHeight =
-      viewportHeight * 0.95;
+      vh * 0.95;
 
   }
 
+
+  /* ----------------------------------------
+     Original image ratio
+  ---------------------------------------- */
 
   const naturalWidth =
     productImg.naturalWidth;
@@ -238,6 +356,10 @@ function getLightboxSize() {
   }
 
 
+  /* ----------------------------------------
+     Calculate size
+  ---------------------------------------- */
+
   let width =
     maxWidth;
 
@@ -257,9 +379,68 @@ function getLightboxSize() {
 
 
   return {
-    width,
-    height
+    width: width,
+    height: height
   };
+
+}
+
+
+/* ============================================================
+   CENTER IMAGE
+   Uses actual LIGHTBOX dimensions
+   — not window.innerWidth / innerHeight
+============================================================ */
+
+function centerLightboxImage() {
+
+  if (
+    !lightbox ||
+    !lightboxImg
+  ) {
+    return;
+  }
+
+
+  const viewport =
+    getLightboxSize();
+
+  const size =
+    getLightboxImageSize();
+
+
+  if (!viewport || !size) {
+    return;
+  }
+
+
+  /* ----------------------------------------
+     EXACT CENTER
+  ---------------------------------------- */
+
+  const left =
+    (viewport.width - size.width) / 2;
+
+  const top =
+    (viewport.height - size.height) / 2;
+
+
+  /* ----------------------------------------
+     Apply
+  ---------------------------------------- */
+
+  lightboxImg.style.width =
+    size.width + "px";
+
+  lightboxImg.style.height =
+    size.height + "px";
+
+  lightboxImg.style.left =
+    left + "px";
+
+  lightboxImg.style.top =
+    top + "px";
+
 }
 
 
@@ -278,46 +459,72 @@ function openLightbox() {
   }
 
 
-  /*
-     Put lightbox directly inside body.
-  */
+  lightboxClosing = false;
 
-  if (
-    lightbox.parentElement !==
-    document.body
-  ) {
 
-    document.body.appendChild(
-      lightbox
-    );
-
+  /* Keep lightbox under body */
+  if (lightbox.parentElement !== document.body) {
+    document.body.appendChild(lightbox);
   }
 
+
+  /* ----------------------------------------
+     Get original product image position
+     BEFORE showing lightbox
+  ---------------------------------------- */
 
   const productRect =
     productImg.getBoundingClientRect();
 
 
-  /*
-     Set image.
-  */
+  /* ----------------------------------------
+     Set image
+  ---------------------------------------- */
 
   lightboxImg.src =
     productImg.currentSrc ||
     productImg.src;
 
   lightboxImg.alt =
-    productImg.alt ||
-    "Expanded Door";
+    productImg.alt || "";
 
 
-  /*
-     START POSITION
-     Exactly where the product image is.
-  */
+  /* ----------------------------------------
+     Lightbox fixed positioning
+  ---------------------------------------- */
+
+  lightbox.style.position =
+    "fixed";
+
+  lightbox.style.left =
+    "0px";
+
+  lightbox.style.top =
+    "0px";
+
+  lightbox.style.right =
+    "0px";
+
+  lightbox.style.bottom =
+    "auto";
+
+  lightbox.style.width =
+    "100%";
+
+  lightbox.style.height =
+    "100dvh";
+
+  lightbox.style.zIndex =
+    "2147483647";
+
+
+  /* ----------------------------------------
+     Starting image position
+     Same as product image
+  ---------------------------------------- */
 
   lightboxImg.style.position =
-    "absolute";
+    "fixed";
 
   lightboxImg.style.left =
     productRect.left + "px";
@@ -332,96 +539,87 @@ function openLightbox() {
     productRect.height + "px";
 
 
-  /*
-     Disable animation for the starting frame.
-  */
-
-  lightboxImg.style.transition =
-    "none";
-
-
-  /*
-     Open overlay.
-  */
+  /* ----------------------------------------
+     Show lightbox
+  ---------------------------------------- */
 
   lightbox.classList.add("show");
+
 
   document.body.style.overflow =
     "hidden";
 
 
-  /*
-     Force browser to paint the starting
-     position before animation.
-  */
+  /* ----------------------------------------
+     Close button
+  ---------------------------------------- */
 
-  lightboxImg.offsetHeight;
+  closeBtn.style.position =
+    "fixed";
 
+  closeBtn.style.top =
+    "18px";
 
-  requestAnimationFrame(function () {
+  closeBtn.style.right =
+    "18px";
 
-    requestAnimationFrame(function () {
+  closeBtn.style.zIndex =
+    "2147483647";
 
+  closeBtn.style.display =
+    "flex";
 
-      /*
-         Restore ORIGINAL animation.
-      */
+  closeBtn.style.visibility =
+    "visible";
 
-      lightboxImg.style.transition =
-        "left .45s cubic-bezier(.19, 1, .22, 1), " +
-        "top .45s cubic-bezier(.19, 1, .22, 1), " +
-        "width .45s cubic-bezier(.19, 1, .22, 1), " +
-        "height .45s cubic-bezier(.19, 1, .22, 1)";
+  closeBtn.style.opacity =
+    "1";
 
-
-      /*
-         Calculate final image size.
-      */
-
-      const size =
-        getLightboxSize();
+  closeBtn.style.pointerEvents =
+    "auto";
 
 
-      if (!size) {
-        return;
-      }
+  /* ----------------------------------------
+     Force browser to render starting state
+  ---------------------------------------- */
 
-      const viewportWidth =
-        lightbox.clientWidth;
-
-      const viewportHeight =
-        lightbox.clientHeight;
+  void lightboxImg.offsetWidth;
 
 
-      const left =
-        (viewportWidth -
-          size.width) / 2;
+  /* ----------------------------------------
+     Wait until lightbox is actually rendered
+  ---------------------------------------- */
+
+  const animateToCenter =
+    function () {
+
+      requestAnimationFrame(function () {
+
+        requestAnimationFrame(function () {
+
+          centerLightboxImage();
+
+        });
+
+      });
+
+    };
 
 
-      const top =
-        (viewportHeight -
-          size.height) / 2;
+  /* ----------------------------------------
+     If image is already loaded
+  ---------------------------------------- */
 
+  if (productImg.complete) {
 
-      /*
-         FINAL CENTER
-      */
+    animateToCenter();
 
-      lightboxImg.style.left =
-        left + "px";
+  } else {
 
-      lightboxImg.style.top =
-        top + "px";
+    lightboxImg.onload =
+      animateToCenter;
 
-      lightboxImg.style.width =
-        size.width + "px";
-
-      lightboxImg.style.height =
-        size.height + "px";
-
-    });
-
-  });
+  }
 
 }
 
@@ -434,212 +632,113 @@ function closeLightbox() {
 
   if (
     !lightbox ||
-    !lightbox.classList.contains("show")
+    !lightbox.classList.contains("show") ||
+    lightboxClosing
   ) {
     return;
   }
 
 
-  const productRect =
+  lightboxClosing = true;
+
+
+  /* ----------------------------------------
+     Get current product image position
+  ---------------------------------------- */
+
+  const rect =
     productImg.getBoundingClientRect();
 
 
-  /*
-     Animate back to original product image.
-  */
+  /* ----------------------------------------
+     Animate image back to product image
+  ---------------------------------------- */
 
   lightboxImg.style.left =
-    productRect.left + "px";
+    rect.left + "px";
 
   lightboxImg.style.top =
-    productRect.top + "px";
+    rect.top + "px";
 
   lightboxImg.style.width =
-    productRect.width + "px";
+    rect.width + "px";
 
   lightboxImg.style.height =
-    productRect.height + "px";
+    rect.height + "px";
 
 
-  setTimeout(function () {
+  /* ----------------------------------------
+     Wait for same animation duration
+  ---------------------------------------- */
 
-    lightbox.classList.remove(
-      "show"
-    );
-
-    document.body.style.overflow =
-      "";
-
-
-    lightboxImg.style.left =
-      "";
-
-    lightboxImg.style.top =
-      "";
-
-    lightboxImg.style.width =
-      "";
-
-    lightboxImg.style.height =
-      "";
-
-    lightboxImg.style.position =
-      "";
-
-  }, 450);
-
-}
-
-
-/* ============================================================
-   PRODUCT IMAGE
-============================================================ */
-
-if (productImg) {
-
-  productImg.addEventListener(
-    "click",
-    openLightbox
-  );
-
-}
-
-
-/* ============================================================
-   OVERLAY CLICK
-============================================================ */
-
-if (overlay) {
-
-  overlay.addEventListener(
-    "click",
-    function (event) {
-
-      if (
-        event.target === overlay
-      ) {
-
-        closeLightbox();
-
-      }
-
-    }
-  );
-
-}
-
-
-/* ============================================================
-   CLOSE BUTTON
-============================================================ */
-
-if (closeBtn) {
-
-  closeBtn.addEventListener(
-    "click",
-    function (event) {
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      closeLightbox();
-
-    }
-  );
-
-}
-
-
-/* ============================================================
-   ESCAPE
-============================================================ */
-
-document.addEventListener(
-  "keydown",
-  function (event) {
-
-    if (
-      event.key === "Escape" &&
-      lightbox &&
-      lightbox.classList.contains("show")
-    ) {
-
-      closeLightbox();
-
-    }
-
-  }
-);
-
-
-/* ============================================================
-   MOBILE BROWSER RESIZE
-============================================================ */
-
-function refreshLightboxPosition() {
-
-  if (
-    !lightbox ||
-    !lightbox.classList.contains("show")
-  ) {
-    return;
-  }
-
-
-  const size =
-    getLightboxSize();
-
-
-  if (!size) {
-    return;
-  }
-
-
-  /*
-     Re-center using the lightbox's
-     actual current dimensions.
-  */
-
-  const left =
-    (lightbox.clientWidth -
-      size.width) / 2;
-
-  const top =
-    (lightbox.clientHeight -
-      size.height) / 2;
-
-
-  lightboxImg.style.left =
-    left + "px";
-
-  lightboxImg.style.top =
-    top + "px";
-
-  lightboxImg.style.width =
-    size.width + "px";
-
-  lightboxImg.style.height =
-    size.height + "px";
-
-}
-
-
-/* ============================================================
-   VISUAL VIEWPORT CHANGES
-============================================================ */
-
-if (window.visualViewport) {
-
-  window.visualViewport.addEventListener(
-    "resize",
+  window.setTimeout(
     function () {
 
-      requestAnimationFrame(
-        refreshLightboxPosition
-      );
+      lightbox.classList.remove("show");
+
+
+      document.body.style.overflow =
+        "";
+
+
+      /* Reset image */
+      lightboxImg.style.left =
+        "";
+
+      lightboxImg.style.top =
+        "";
+
+      lightboxImg.style.width =
+        "";
+
+      lightboxImg.style.height =
+        "";
+
+
+      /* Reset lightbox */
+      lightbox.style.position =
+        "";
+
+      lightbox.style.left =
+        "";
+
+      lightbox.style.top =
+        "";
+
+      lightbox.style.right =
+        "";
+
+      lightbox.style.bottom =
+        "";
+
+      lightbox.style.width =
+        "";
+
+      lightbox.style.height =
+        "";
+
+      lightbox.style.zIndex =
+        "";
+
+
+      /* Reset close button */
+      closeBtn.style.position =
+        "";
+
+      closeBtn.style.top =
+        "";
+
+      closeBtn.style.right =
+        "";
+
+      closeBtn.style.zIndex =
+        "";
+
+
+      lightboxClosing = false;
 
     },
-    { passive: true }
+    450
   );
 
 }
