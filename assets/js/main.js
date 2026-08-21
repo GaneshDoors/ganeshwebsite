@@ -114,162 +114,54 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============================================================
-   PREMIUM LIGHTBOX — UNIVERSAL SMARTPHONE VERSION
-   Keeps existing animation and sizing.
-   Uses the visual viewport for accurate positioning.
+   PREMIUM LIGHTBOX
+   UNIVERSAL SMARTPHONE / TABLET / DESKTOP
 ============================================================ */
 
-const productImg = document.getElementById("productImg");
-const lightbox = document.getElementById("lightbox");
-const lightboxImg = document.getElementById("lightboxImg");
-const overlay = document.querySelector(".lightbox-overlay");
-const closeBtn = document.querySelector(".close-lightbox");
+const productImg =
+  document.getElementById("productImg");
+
+const lightbox =
+  document.getElementById("lightbox");
+
+const lightboxImg =
+  document.getElementById("lightboxImg");
+
+const overlay =
+  document.querySelector(".lightbox-overlay");
+
+const closeBtn =
+  document.querySelector(".close-lightbox");
 
 
 /* ============================================================
-   GET CURRENT VISIBLE VIEWPORT
+   GET IMAGE SIZE
 ============================================================ */
 
-function getLightboxViewport() {
+function getLightboxSize() {
 
-  if (window.visualViewport) {
-
-    return {
-      width: window.visualViewport.width,
-      height: window.visualViewport.height,
-      offsetTop: window.visualViewport.offsetTop,
-      offsetLeft: window.visualViewport.offsetLeft
-    };
-
-  }
-
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    offsetTop: 0,
-    offsetLeft: 0
-  };
-}
-
-
-function openLightbox() {
-
-  if (!productImg || !lightbox || !lightboxImg) {
-    return;
-  }
-
-  if (lightbox.parentElement !== document.body) {
-    document.body.appendChild(lightbox);
-  }
-
-  const rect = productImg.getBoundingClientRect();
-
-  lightboxImg.src =
-    productImg.currentSrc ||
-    productImg.src;
-
-  lightboxImg.alt =
-    productImg.alt ||
-    "Expanded Door";
-
-
-  /* Start from the actual product-image position */
-  lightboxImg.style.left =
-    rect.left + "px";
-
-  lightboxImg.style.top =
-    rect.top + "px";
-
-  lightboxImg.style.width =
-    rect.width + "px";
-
-  lightboxImg.style.height =
-    rect.height + "px";
-
-
-  /* Make sure the starting position is painted first */
-  lightboxImg.style.transition = "none";
-
-  lightbox.classList.add("show");
-
-
-  requestAnimationFrame(function () {
-
-    requestAnimationFrame(function () {
-
-      /*
-         Restore your original lightbox animation
-      */
-      lightboxImg.style.transition =
-        "left .45s cubic-bezier(.19, 1, .22, 1), " +
-        "top .45s cubic-bezier(.19, 1, .22, 1), " +
-        "width .45s cubic-bezier(.19, 1, .22, 1), " +
-        "height .45s cubic-bezier(.19, 1, .22, 1)";
-
-
-      /*
-         Calculate final centered position
-      */
-      positionLightboxImage();
-
-    });
-
-  });
-
-
-  document.body.style.overflow = "hidden";
-
-
-  if (closeBtn) {
-    closeBtn.style.visibility = "visible";
-    closeBtn.style.opacity = "1";
-    closeBtn.style.pointerEvents = "auto";
-  }
-}
-
-
-/* ============================================================
-   POSITION LIGHTBOX IMAGE
-============================================================ */
-
-function positionLightboxImage() {
-
-  if (
-    !lightbox ||
-    !lightboxImg ||
-    !productImg
-  ) {
-    return;
+  if (!productImg || !lightboxImg) {
+    return null;
   }
 
 
-  if (!lightbox.classList.contains("show")) {
-    return;
-  }
+  const viewportWidth =
+    window.visualViewport
+      ? window.visualViewport.width
+      : window.innerWidth;
+
+  const viewportHeight =
+    window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
 
 
-  const viewport = getLightboxViewport();
-
-  const vw = viewport.width;
-  const vh = viewport.height;
-
-  const offsetTop =
-    viewport.offsetTop;
-
-  const offsetLeft =
-    viewport.offsetLeft;
-
-
-  /*
-     Keep your existing responsive size rules.
-     These values control SIZE only.
-  */
-
-  const isMobile = vw <= 767;
+  const isMobile =
+    viewportWidth <= 767;
 
   const isTablet =
-    vw >= 768 &&
-    vw <= 1199;
+    viewportWidth >= 768 &&
+    viewportWidth <= 1199;
 
 
   let maxWidth;
@@ -280,8 +172,11 @@ function positionLightboxImage() {
 
   if (isMobile) {
 
-    maxWidth = vw * 0.85;
-    maxHeight = vh * 0.82;
+    maxWidth =
+      viewportWidth * 0.85;
+
+    maxHeight =
+      viewportHeight * 0.82;
 
   }
 
@@ -290,8 +185,11 @@ function positionLightboxImage() {
 
   else if (isTablet) {
 
-    maxWidth = vw * 0.70;
-    maxHeight = vh * 0.74;
+    maxWidth =
+      viewportWidth * 0.70;
+
+    maxHeight =
+      viewportHeight * 0.74;
 
   }
 
@@ -300,15 +198,14 @@ function positionLightboxImage() {
 
   else {
 
-    maxWidth = vw * 0.85;
-    maxHeight = vh * 0.95;
+    maxWidth =
+      viewportWidth * 0.85;
+
+    maxHeight =
+      viewportHeight * 0.95;
 
   }
 
-
-  /*
-     Get original image ratio.
-  */
 
   const naturalWidth =
     productImg.naturalWidth;
@@ -337,15 +234,12 @@ function positionLightboxImage() {
     ratio =
       rect.width /
       rect.height;
+
   }
 
 
-  /*
-     Calculate image dimensions.
-     This preserves the existing behaviour.
-  */
-
-  let width = maxWidth;
+  let width =
+    maxWidth;
 
   let height =
     width / ratio;
@@ -353,44 +247,182 @@ function positionLightboxImage() {
 
   if (height > maxHeight) {
 
-    height = maxHeight;
+    height =
+      maxHeight;
 
     width =
       height * ratio;
+
+  }
+
+
+  return {
+    width,
+    height
+  };
+}
+
+
+/* ============================================================
+   OPEN LIGHTBOX
+============================================================ */
+
+function openLightbox() {
+
+  if (
+    !productImg ||
+    !lightbox ||
+    !lightboxImg
+  ) {
+    return;
   }
 
 
   /*
-     IMPORTANT:
-     Center inside the ACTUAL visible viewport,
-     not just window.innerHeight.
+     Put lightbox directly inside body.
   */
 
-  const left =
-    offsetLeft +
-    (vw - width) / 2;
+  if (
+    lightbox.parentElement !==
+    document.body
+  ) {
+
+    document.body.appendChild(
+      lightbox
+    );
+
+  }
 
 
-  const top =
-    offsetTop +
-    (vh - height) / 2;
+  const productRect =
+    productImg.getBoundingClientRect();
 
 
   /*
-     Keep your existing animated positioning.
+     Set image.
   */
 
+  lightboxImg.src =
+    productImg.currentSrc ||
+    productImg.src;
+
+  lightboxImg.alt =
+    productImg.alt ||
+    "Expanded Door";
+
+
+  /*
+     START POSITION
+     Exactly where the product image is.
+  */
+
+  lightboxImg.style.position =
+    "absolute";
+
   lightboxImg.style.left =
-    left + "px";
+    productRect.left + "px";
 
   lightboxImg.style.top =
-    top + "px";
+    productRect.top + "px";
 
   lightboxImg.style.width =
-    width + "px";
+    productRect.width + "px";
 
   lightboxImg.style.height =
-    height + "px";
+    productRect.height + "px";
+
+
+  /*
+     Disable animation for the starting frame.
+  */
+
+  lightboxImg.style.transition =
+    "none";
+
+
+  /*
+     Open overlay.
+  */
+
+  lightbox.classList.add("show");
+
+  document.body.style.overflow =
+    "hidden";
+
+
+  /*
+     Force browser to paint the starting
+     position before animation.
+  */
+
+  lightboxImg.offsetHeight;
+
+
+  requestAnimationFrame(function () {
+
+    requestAnimationFrame(function () {
+
+
+      /*
+         Restore ORIGINAL animation.
+      */
+
+      lightboxImg.style.transition =
+        "left .45s cubic-bezier(.19, 1, .22, 1), " +
+        "top .45s cubic-bezier(.19, 1, .22, 1), " +
+        "width .45s cubic-bezier(.19, 1, .22, 1), " +
+        "height .45s cubic-bezier(.19, 1, .22, 1)";
+
+
+      /*
+         Calculate final image size.
+      */
+
+      const size =
+        getLightboxSize();
+
+
+      if (!size) {
+        return;
+      }
+
+      const viewportWidth =
+        lightbox.clientWidth;
+
+      const viewportHeight =
+        lightbox.clientHeight;
+
+
+      const left =
+        (viewportWidth -
+          size.width) / 2;
+
+
+      const top =
+        (viewportHeight -
+          size.height) / 2;
+
+
+      /*
+         FINAL CENTER
+      */
+
+      lightboxImg.style.left =
+        left + "px";
+
+      lightboxImg.style.top =
+        top + "px";
+
+      lightboxImg.style.width =
+        size.width + "px";
+
+      lightboxImg.style.height =
+        size.height + "px";
+
+    });
+
+  });
+
 }
 
 
@@ -408,43 +440,51 @@ function closeLightbox() {
   }
 
 
-  /*
-     Preserve your existing closing animation.
-  */
-
-  const rect =
+  const productRect =
     productImg.getBoundingClientRect();
 
 
+  /*
+     Animate back to original product image.
+  */
+
   lightboxImg.style.left =
-    rect.left + "px";
+    productRect.left + "px";
 
   lightboxImg.style.top =
-    rect.top + "px";
+    productRect.top + "px";
 
   lightboxImg.style.width =
-    rect.width + "px";
+    productRect.width + "px";
 
   lightboxImg.style.height =
-    rect.height + "px";
+    productRect.height + "px";
 
 
   setTimeout(function () {
 
-    lightbox.classList.remove("show");
+    lightbox.classList.remove(
+      "show"
+    );
 
-    document.body.style.overflow = "";
+    document.body.style.overflow =
+      "";
 
 
-    /*
-       Clear only inline positioning.
-    */
+    lightboxImg.style.left =
+      "";
 
-    lightboxImg.style.left = "";
-    lightboxImg.style.top = "";
-    lightboxImg.style.width = "";
-    lightboxImg.style.height = "";
+    lightboxImg.style.top =
+      "";
 
+    lightboxImg.style.width =
+      "";
+
+    lightboxImg.style.height =
+      "";
+
+    lightboxImg.style.position =
+      "";
 
   }, 450);
 
@@ -452,7 +492,7 @@ function closeLightbox() {
 
 
 /* ============================================================
-   PRODUCT IMAGE CLICK
+   PRODUCT IMAGE
 ============================================================ */
 
 if (productImg) {
@@ -466,7 +506,7 @@ if (productImg) {
 
 
 /* ============================================================
-   CLICK OUTSIDE IMAGE
+   OVERLAY CLICK
 ============================================================ */
 
 if (overlay) {
@@ -511,7 +551,7 @@ if (closeBtn) {
 
 
 /* ============================================================
-   ESCAPE KEY
+   ESCAPE
 ============================================================ */
 
 document.addEventListener(
@@ -533,7 +573,59 @@ document.addEventListener(
 
 
 /* ============================================================
-   HANDLE MOBILE VIEWPORT CHANGES
+   MOBILE BROWSER RESIZE
+============================================================ */
+
+function refreshLightboxPosition() {
+
+  if (
+    !lightbox ||
+    !lightbox.classList.contains("show")
+  ) {
+    return;
+  }
+
+
+  const size =
+    getLightboxSize();
+
+
+  if (!size) {
+    return;
+  }
+
+
+  /*
+     Re-center using the lightbox's
+     actual current dimensions.
+  */
+
+  const left =
+    (lightbox.clientWidth -
+      size.width) / 2;
+
+  const top =
+    (lightbox.clientHeight -
+      size.height) / 2;
+
+
+  lightboxImg.style.left =
+    left + "px";
+
+  lightboxImg.style.top =
+    top + "px";
+
+  lightboxImg.style.width =
+    size.width + "px";
+
+  lightboxImg.style.height =
+    size.height + "px";
+
+}
+
+
+/* ============================================================
+   VISUAL VIEWPORT CHANGES
 ============================================================ */
 
 if (window.visualViewport) {
@@ -542,36 +634,9 @@ if (window.visualViewport) {
     "resize",
     function () {
 
-      if (
-        lightbox &&
-        lightbox.classList.contains("show")
-      ) {
-
-        requestAnimationFrame(
-          positionLightboxImage
-        );
-
-      }
-
-    },
-    { passive: true }
-  );
-
-
-  window.visualViewport.addEventListener(
-    "scroll",
-    function () {
-
-      if (
-        lightbox &&
-        lightbox.classList.contains("show")
-      ) {
-
-        requestAnimationFrame(
-          positionLightboxImage
-        );
-
-      }
+      requestAnimationFrame(
+        refreshLightboxPosition
+      );
 
     },
     { passive: true }
