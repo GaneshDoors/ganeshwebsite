@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============================================================
-   PREMIUM LIGHTBOX — FINAL VERSION
+   PREMIUM LIGHTBOX — ANDROID / REDMI SAFE VERSION
 ============================================================ */
 
 const productImg = document.getElementById("productImg");
@@ -132,7 +132,9 @@ if (productImg && lightbox && lightboxImg && overlay && closeBtn) {
   productImg.addEventListener("click", openLightbox);
 
   overlay.addEventListener("click", function (e) {
-    if (e.target === overlay) closeLightbox();
+    if (e.target === overlay) {
+      closeLightbox();
+    }
   });
 
   closeBtn.addEventListener("click", function (e) {
@@ -146,6 +148,30 @@ if (productImg && lightbox && lightboxImg && overlay && closeBtn) {
       closeLightbox();
     }
   });
+}
+
+
+/* ============================================================
+   GET REAL VISIBLE VIEWPORT
+============================================================ */
+
+function getLightboxViewport() {
+
+  if (window.visualViewport) {
+    return {
+      width: window.visualViewport.width,
+      height: window.visualViewport.height,
+      offsetTop: window.visualViewport.offsetTop,
+      offsetLeft: window.visualViewport.offsetLeft
+    };
+  }
+
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    offsetTop: 0,
+    offsetLeft: 0
+  };
 }
 
 
@@ -166,6 +192,7 @@ function openLightbox() {
   lightboxImg.src = productImg.currentSrc || productImg.src;
   lightboxImg.alt = productImg.alt || "";
 
+  /* Start from original image position */
   lightboxImg.style.position = "fixed";
   lightboxImg.style.left = rect.left + "px";
   lightboxImg.style.top = rect.top + "px";
@@ -181,11 +208,10 @@ function openLightbox() {
   lightbox.style.top = "0";
   lightbox.style.right = "0";
   lightbox.style.bottom = "0";
-  lightbox.style.width = "100vw";
-  lightbox.style.height = "100vh";
+  lightbox.style.width = "100%";
+  lightbox.style.height = "100%";
   lightbox.style.zIndex = "2147483647";
 
-  /* Keep your existing cancel button behavior */
   closeBtn.style.position = "fixed";
   closeBtn.style.top = "18px";
   closeBtn.style.right = "18px";
@@ -197,15 +223,19 @@ function openLightbox() {
 
 
   /* ========================================================
-     CALCULATE FINAL IMAGE SIZE
+     CALCULATE AFTER LIGHTBOX IS VISIBLE
   ======================================================== */
 
   requestAnimationFrame(function () {
 
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const viewport = getLightboxViewport();
 
-    const isMobile = vw <= 400;
+    const vw = viewport.width;
+    const vh = viewport.height;
+    const offsetTop = viewport.offsetTop;
+    const offsetLeft = viewport.offsetLeft;
+
+    const isMobile = vw <= 767;
 
     const isTablet =
       vw >= 768 &&
@@ -217,8 +247,6 @@ function openLightbox() {
 
     /* ======================================================
        MOBILE
-       iPhone SE + Samsung Galaxy S8+
-       Smaller image so close button never overlaps door
     ====================================================== */
 
     if (isMobile) {
@@ -227,9 +255,9 @@ function openLightbox() {
       maxHeight = vh * 0.82;
 
 
-      /* ======================================================
-         TABLET
-      ====================================================== */
+    /* ======================================================
+       TABLET
+    ====================================================== */
 
     } else if (isTablet) {
 
@@ -237,9 +265,9 @@ function openLightbox() {
       maxHeight = vh * 0.74;
 
 
-      /* ======================================================
-         DESKTOP
-      ====================================================== */
+    /* ======================================================
+       DESKTOP
+    ====================================================== */
 
     } else {
 
@@ -279,11 +307,14 @@ function openLightbox() {
 
 
     /* ======================================================
-       CENTER IMAGE
+       TRUE CENTER OF VISIBLE VIEWPORT
     ====================================================== */
 
-    const left = (vw - width) / 2;
-    const top = (vh - height) / 2;
+    const left =
+      offsetLeft + (vw - width) / 2;
+
+    const top =
+      offsetTop + (vh - height) / 2;
 
 
     /* ======================================================
@@ -295,10 +326,6 @@ function openLightbox() {
     lightboxImg.style.left = left + "px";
     lightboxImg.style.top = top + "px";
 
-
-    /* ======================================================
-       RE-ASSERT CLOSE BUTTON
-    ====================================================== */
 
     closeBtn.style.position = "fixed";
     closeBtn.style.top = "18px";
@@ -353,7 +380,6 @@ function closeLightbox() {
   }, 450);
 
 }
-
 /* ===========================
    Counter Animation
 =========================== */
