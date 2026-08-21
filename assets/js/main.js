@@ -114,7 +114,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============================================================
-   PREMIUM LIGHTBOX — ANDROID / REDMI SAFE VERSION
+   PREMIUM LIGHTBOX — UNIVERSAL SMARTPHONE VERSION
+   Keeps existing animation and sizing.
+   Uses the visual viewport for accurate positioning.
 ============================================================ */
 
 const productImg = document.getElementById("productImg");
@@ -123,47 +125,22 @@ const lightboxImg = document.getElementById("lightboxImg");
 const overlay = document.querySelector(".lightbox-overlay");
 const closeBtn = document.querySelector(".close-lightbox");
 
-if (productImg && lightbox && lightboxImg && overlay && closeBtn) {
-
-  if (lightbox.parentElement !== document.body) {
-    document.body.appendChild(lightbox);
-  }
-
-  productImg.addEventListener("click", openLightbox);
-
-  overlay.addEventListener("click", function (e) {
-    if (e.target === overlay) {
-      closeLightbox();
-    }
-  });
-
-  closeBtn.addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    closeLightbox();
-  });
-
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && lightbox.classList.contains("show")) {
-      closeLightbox();
-    }
-  });
-}
-
 
 /* ============================================================
-   GET REAL VISIBLE VIEWPORT
+   GET CURRENT VISIBLE VIEWPORT
 ============================================================ */
 
 function getLightboxViewport() {
 
   if (window.visualViewport) {
+
     return {
       width: window.visualViewport.width,
       height: window.visualViewport.height,
       offsetTop: window.visualViewport.offsetTop,
       offsetLeft: window.visualViewport.offsetLeft
     };
+
   }
 
   return {
@@ -175,13 +152,11 @@ function getLightboxViewport() {
 }
 
 
-/* ============================================================
-   OPEN LIGHTBOX
-============================================================ */
-
 function openLightbox() {
 
-  if (!productImg || !lightbox || !lightboxImg) return;
+  if (!productImg || !lightbox || !lightboxImg) {
+    return;
+  }
 
   if (lightbox.parentElement !== document.body) {
     document.body.appendChild(lightbox);
@@ -189,151 +164,233 @@ function openLightbox() {
 
   const rect = productImg.getBoundingClientRect();
 
-  lightboxImg.src = productImg.currentSrc || productImg.src;
-  lightboxImg.alt = productImg.alt || "";
+  lightboxImg.src =
+    productImg.currentSrc ||
+    productImg.src;
 
-  /* Start from original image position */
-  lightboxImg.style.position = "fixed";
-  lightboxImg.style.left = rect.left + "px";
-  lightboxImg.style.top = rect.top + "px";
-  lightboxImg.style.width = rect.width + "px";
-  lightboxImg.style.height = rect.height + "px";
+  lightboxImg.alt =
+    productImg.alt ||
+    "Expanded Door";
+
+
+  /* Start from the actual product-image position */
+  lightboxImg.style.left =
+    rect.left + "px";
+
+  lightboxImg.style.top =
+    rect.top + "px";
+
+  lightboxImg.style.width =
+    rect.width + "px";
+
+  lightboxImg.style.height =
+    rect.height + "px";
+
+
+  /* Make sure the starting position is painted first */
+  lightboxImg.style.transition = "none";
 
   lightbox.classList.add("show");
 
-  document.body.style.overflow = "hidden";
-
-  lightbox.style.position = "fixed";
-  lightbox.style.left = "0";
-  lightbox.style.top = "0";
-  lightbox.style.right = "0";
-  lightbox.style.bottom = "0";
-  lightbox.style.width = "100%";
-  lightbox.style.height = "100%";
-  lightbox.style.zIndex = "2147483647";
-
-  closeBtn.style.position = "fixed";
-  closeBtn.style.top = "18px";
-  closeBtn.style.right = "18px";
-  closeBtn.style.zIndex = "2147483647";
-  closeBtn.style.display = "flex";
-  closeBtn.style.visibility = "visible";
-  closeBtn.style.opacity = "1";
-  closeBtn.style.pointerEvents = "auto";
-
-
-  /* ========================================================
-     CALCULATE AFTER LIGHTBOX IS VISIBLE
-  ======================================================== */
 
   requestAnimationFrame(function () {
 
-    const viewport = getLightboxViewport();
+    requestAnimationFrame(function () {
 
-    const vw = viewport.width;
-    const vh = viewport.height;
-    const offsetTop = viewport.offsetTop;
-    const offsetLeft = viewport.offsetLeft;
-
-    const isMobile = vw <= 767;
-
-    const isTablet =
-      vw >= 768 &&
-      vw <= 1199;
-
-    let maxWidth;
-    let maxHeight;
+      /*
+         Restore your original lightbox animation
+      */
+      lightboxImg.style.transition =
+        "left .45s cubic-bezier(.19, 1, .22, 1), " +
+        "top .45s cubic-bezier(.19, 1, .22, 1), " +
+        "width .45s cubic-bezier(.19, 1, .22, 1), " +
+        "height .45s cubic-bezier(.19, 1, .22, 1)";
 
 
-    /* ======================================================
-       MOBILE
-    ====================================================== */
+      /*
+         Calculate final centered position
+      */
+      positionLightboxImage();
 
-    if (isMobile) {
-
-      maxWidth = vw * 0.85;
-      maxHeight = vh * 0.82;
-
-
-    /* ======================================================
-       TABLET
-    ====================================================== */
-
-    } else if (isTablet) {
-
-      maxWidth = vw * 0.70;
-      maxHeight = vh * 0.74;
-
-
-    /* ======================================================
-       DESKTOP
-    ====================================================== */
-
-    } else {
-
-      maxWidth = vw * 0.85;
-      maxHeight = vh * 0.95;
-
-    }
-
-
-    /* ======================================================
-       IMAGE RATIO
-    ====================================================== */
-
-    const naturalWidth = productImg.naturalWidth;
-    const naturalHeight = productImg.naturalHeight;
-
-    let ratio;
-
-    if (naturalWidth > 0 && naturalHeight > 0) {
-      ratio = naturalWidth / naturalHeight;
-    } else {
-      ratio = rect.width / rect.height;
-    }
-
-
-    /* ======================================================
-       CALCULATE DIMENSIONS
-    ====================================================== */
-
-    let width = maxWidth;
-    let height = width / ratio;
-
-    if (height > maxHeight) {
-      height = maxHeight;
-      width = height * ratio;
-    }
-
-
-    /* ======================================================
-       TRUE CENTER OF VISIBLE VIEWPORT
-    ====================================================== */
-
-    const left =
-      offsetLeft + (vw - width) / 2;
-
-    const top =
-      offsetTop + (vh - height) / 2;
-
-
-    /* ======================================================
-       APPLY FINAL SIZE
-    ====================================================== */
-
-    lightboxImg.style.width = width + "px";
-    lightboxImg.style.height = height + "px";
-    lightboxImg.style.left = left + "px";
-    lightboxImg.style.top = top + "px";
-
-
-    closeBtn.style.position = "fixed";
-    closeBtn.style.top = "18px";
-    closeBtn.style.right = "18px";
-    closeBtn.style.zIndex = "2147483647";
+    });
 
   });
 
+
+  document.body.style.overflow = "hidden";
+
+
+  if (closeBtn) {
+    closeBtn.style.visibility = "visible";
+    closeBtn.style.opacity = "1";
+    closeBtn.style.pointerEvents = "auto";
+  }
+}
+
+
+/* ============================================================
+   POSITION LIGHTBOX IMAGE
+============================================================ */
+
+function positionLightboxImage() {
+
+  if (
+    !lightbox ||
+    !lightboxImg ||
+    !productImg
+  ) {
+    return;
+  }
+
+
+  if (!lightbox.classList.contains("show")) {
+    return;
+  }
+
+
+  const viewport = getLightboxViewport();
+
+  const vw = viewport.width;
+  const vh = viewport.height;
+
+  const offsetTop =
+    viewport.offsetTop;
+
+  const offsetLeft =
+    viewport.offsetLeft;
+
+
+  /*
+     Keep your existing responsive size rules.
+     These values control SIZE only.
+  */
+
+  const isMobile = vw <= 767;
+
+  const isTablet =
+    vw >= 768 &&
+    vw <= 1199;
+
+
+  let maxWidth;
+  let maxHeight;
+
+
+  /* MOBILE */
+
+  if (isMobile) {
+
+    maxWidth = vw * 0.85;
+    maxHeight = vh * 0.82;
+
+  }
+
+
+  /* TABLET */
+
+  else if (isTablet) {
+
+    maxWidth = vw * 0.70;
+    maxHeight = vh * 0.74;
+
+  }
+
+
+  /* DESKTOP */
+
+  else {
+
+    maxWidth = vw * 0.85;
+    maxHeight = vh * 0.95;
+
+  }
+
+
+  /*
+     Get original image ratio.
+  */
+
+  const naturalWidth =
+    productImg.naturalWidth;
+
+  const naturalHeight =
+    productImg.naturalHeight;
+
+
+  let ratio;
+
+
+  if (
+    naturalWidth > 0 &&
+    naturalHeight > 0
+  ) {
+
+    ratio =
+      naturalWidth /
+      naturalHeight;
+
+  } else {
+
+    const rect =
+      productImg.getBoundingClientRect();
+
+    ratio =
+      rect.width /
+      rect.height;
+  }
+
+
+  /*
+     Calculate image dimensions.
+     This preserves the existing behaviour.
+  */
+
+  let width = maxWidth;
+
+  let height =
+    width / ratio;
+
+
+  if (height > maxHeight) {
+
+    height = maxHeight;
+
+    width =
+      height * ratio;
+  }
+
+
+  /*
+     IMPORTANT:
+     Center inside the ACTUAL visible viewport,
+     not just window.innerHeight.
+  */
+
+  const left =
+    offsetLeft +
+    (vw - width) / 2;
+
+
+  const top =
+    offsetTop +
+    (vh - height) / 2;
+
+
+  /*
+     Keep your existing animated positioning.
+  */
+
+  lightboxImg.style.left =
+    left + "px";
+
+  lightboxImg.style.top =
+    top + "px";
+
+  lightboxImg.style.width =
+    width + "px";
+
+  lightboxImg.style.height =
+    height + "px";
 }
 
 
@@ -343,14 +400,34 @@ function openLightbox() {
 
 function closeLightbox() {
 
-  if (!lightbox || !lightbox.classList.contains("show")) return;
+  if (
+    !lightbox ||
+    !lightbox.classList.contains("show")
+  ) {
+    return;
+  }
 
-  const rect = productImg.getBoundingClientRect();
 
-  lightboxImg.style.left = rect.left + "px";
-  lightboxImg.style.top = rect.top + "px";
-  lightboxImg.style.width = rect.width + "px";
-  lightboxImg.style.height = rect.height + "px";
+  /*
+     Preserve your existing closing animation.
+  */
+
+  const rect =
+    productImg.getBoundingClientRect();
+
+
+  lightboxImg.style.left =
+    rect.left + "px";
+
+  lightboxImg.style.top =
+    rect.top + "px";
+
+  lightboxImg.style.width =
+    rect.width + "px";
+
+  lightboxImg.style.height =
+    rect.height + "px";
+
 
   setTimeout(function () {
 
@@ -358,26 +435,147 @@ function closeLightbox() {
 
     document.body.style.overflow = "";
 
+
+    /*
+       Clear only inline positioning.
+    */
+
     lightboxImg.style.left = "";
     lightboxImg.style.top = "";
     lightboxImg.style.width = "";
     lightboxImg.style.height = "";
 
-    lightbox.style.position = "";
-    lightbox.style.left = "";
-    lightbox.style.top = "";
-    lightbox.style.right = "";
-    lightbox.style.bottom = "";
-    lightbox.style.width = "";
-    lightbox.style.height = "";
-    lightbox.style.zIndex = "";
-
-    closeBtn.style.position = "";
-    closeBtn.style.top = "";
-    closeBtn.style.right = "";
-    closeBtn.style.zIndex = "";
 
   }, 450);
+
+}
+
+
+/* ============================================================
+   PRODUCT IMAGE CLICK
+============================================================ */
+
+if (productImg) {
+
+  productImg.addEventListener(
+    "click",
+    openLightbox
+  );
+
+}
+
+
+/* ============================================================
+   CLICK OUTSIDE IMAGE
+============================================================ */
+
+if (overlay) {
+
+  overlay.addEventListener(
+    "click",
+    function (event) {
+
+      if (
+        event.target === overlay
+      ) {
+
+        closeLightbox();
+
+      }
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   CLOSE BUTTON
+============================================================ */
+
+if (closeBtn) {
+
+  closeBtn.addEventListener(
+    "click",
+    function (event) {
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      closeLightbox();
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   ESCAPE KEY
+============================================================ */
+
+document.addEventListener(
+  "keydown",
+  function (event) {
+
+    if (
+      event.key === "Escape" &&
+      lightbox &&
+      lightbox.classList.contains("show")
+    ) {
+
+      closeLightbox();
+
+    }
+
+  }
+);
+
+
+/* ============================================================
+   HANDLE MOBILE VIEWPORT CHANGES
+============================================================ */
+
+if (window.visualViewport) {
+
+  window.visualViewport.addEventListener(
+    "resize",
+    function () {
+
+      if (
+        lightbox &&
+        lightbox.classList.contains("show")
+      ) {
+
+        requestAnimationFrame(
+          positionLightboxImage
+        );
+
+      }
+
+    },
+    { passive: true }
+  );
+
+
+  window.visualViewport.addEventListener(
+    "scroll",
+    function () {
+
+      if (
+        lightbox &&
+        lightbox.classList.contains("show")
+      ) {
+
+        requestAnimationFrame(
+          positionLightboxImage
+        );
+
+      }
+
+    },
+    { passive: true }
+  );
 
 }
 /* ===========================
