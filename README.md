@@ -202,7 +202,7 @@ The website is regularly maintained and updated to ensure proper functionality, 
 
 ---
 
-## License
+## ⚠️ Disclaimer
 
 This website, including its original design, content, branding, product images, graphics, text, layout, code, and other original assets, is proprietary to **Ganesh Doors / Shree Ganesh Traders** unless otherwise stated.
 
