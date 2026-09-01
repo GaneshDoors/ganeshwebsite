@@ -1700,6 +1700,7 @@ document.addEventListener("DOMContentLoaded", function () {
 /* ===========================
    Gallery Lightbox
 =========================== */
+
 const galleryCards = document.querySelectorAll(".showroom-card");
 const galleryLightbox = document.getElementById("showroomLightbox");
 
@@ -1712,54 +1713,768 @@ if (galleryCards.length && galleryLightbox) {
 
   let galleryIndex = 0;
 
+  /* ===========================
+     Zoom Settings
+  =========================== */
+
+  let scale = 1;
+  let translateX = 0;
+  let translateY = 0;
+
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 4;
+  const DOUBLE_TAP_SCALE = 2.5;
+
+  /* ===========================
+     Interaction Variables
+  =========================== */
+
+  let startX = 0;
+  let startY = 0;
+
+  let lastX = 0;
+  let lastY = 0;
+
+  let isDragging = false;
+  let isPinching = false;
+  let moved = false;
+
+  let initialDistance = 0;
+  let initialScale = 1;
+
+  let lastTapTime = 0;
+
+  /* ===========================
+     Update Image Transform
+  =========================== */
+
+  function updateImageTransform() {
+    galleryImage.style.transform =
+      `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
+  }
+
+
+  /* ===========================
+     Reset Zoom
+  =========================== */
+
+  function resetGalleryZoom() {
+    scale = MIN_SCALE;
+    translateX = 0;
+    translateY = 0;
+
+    galleryImage.style.transition =
+      "transform 0.25s ease";
+
+    updateImageTransform();
+  }
+
+
+  /* ===========================
+     Limit Image Movement
+  =========================== */
+
+  function limitImagePosition() {
+    if (scale <= MIN_SCALE) {
+      translateX = 0;
+      translateY = 0;
+      return;
+    }
+
+    /*
+      Use the natural displayed image size.
+      offsetWidth/offsetHeight do not include
+      the current CSS transform.
+    */
+
+    const imageWidth =
+      galleryImage.offsetWidth;
+
+    const imageHeight =
+      galleryImage.offsetHeight;
+
+    const maxX =
+      (imageWidth * (scale - 1)) / 2;
+
+    const maxY =
+      (imageHeight * (scale - 1)) / 2;
+
+    translateX = Math.max(
+      -maxX,
+      Math.min(maxX, translateX)
+    );
+
+    translateY = Math.max(
+      -maxY,
+      Math.min(maxY, translateY)
+    );
+  }
+
+
+  /* ===========================
+     Update Gallery Image
+  =========================== */
+
   function updateGalleryLightbox() {
     const card = galleryCards[galleryIndex];
-    galleryImage.src = card.dataset.image;
-    galleryImage.alt = card.dataset.title || card.querySelector("img")?.alt || "";
-    galleryTitle.textContent = card.dataset.title || "";
+
+    resetGalleryZoom();
+
+    galleryImage.src =
+      card.dataset.image;
+
+    galleryImage.alt =
+      card.dataset.title ||
+      card.querySelector("img")?.alt ||
+      "";
+
+    if (galleryTitle) {
+      galleryTitle.textContent =
+        card.dataset.title || "";
+    }
   }
+
+
+  /* ===========================
+     Open Lightbox
+  =========================== */
 
   function openGalleryLightbox(index) {
     galleryIndex = index;
+
     updateGalleryLightbox();
+
     galleryLightbox.classList.add("show");
-    galleryLightbox.setAttribute("aria-hidden", "false");
-    document.body.classList.add("showroom-lightbox-open");
+
+    galleryLightbox.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+    /*
+      Lock scrolling without using
+      position: fixed on body.
+    */
+
+    document.documentElement.classList.add(
+      "showroom-lightbox-open"
+    );
+
+    document.body.classList.add(
+      "showroom-lightbox-open"
+    );
   }
+
+
+  /* ===========================
+     Close Lightbox
+  =========================== */
 
   function closeGalleryLightbox() {
     galleryLightbox.classList.remove("show");
-    galleryLightbox.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("showroom-lightbox-open");
+
+    galleryLightbox.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    /*
+      Unlock scrolling
+    */
+
+    document.documentElement.classList.remove(
+      "showroom-lightbox-open"
+    );
+
+    document.body.classList.remove(
+      "showroom-lightbox-open"
+    );
+
+    resetGalleryZoom();
   }
+
+
+  /* ===========================
+     Next Image
+  =========================== */
 
   function nextGalleryImage() {
-    galleryIndex = (galleryIndex + 1) % galleryCards.length;
+    galleryIndex =
+      (galleryIndex + 1) %
+      galleryCards.length;
+
     updateGalleryLightbox();
   }
+
+
+  /* ===========================
+     Previous Image
+  =========================== */
 
   function previousGalleryImage() {
-    galleryIndex = (galleryIndex - 1 + galleryCards.length) % galleryCards.length;
+    galleryIndex =
+      (galleryIndex - 1 + galleryCards.length) %
+      galleryCards.length;
+
     updateGalleryLightbox();
   }
 
+
+  /* ===========================
+     Open Card Image
+  =========================== */
+
   galleryCards.forEach((card, index) => {
-    card.addEventListener("click", () => openGalleryLightbox(index));
+    card.addEventListener(
+      "click",
+      () => {
+        openGalleryLightbox(index);
+      }
+    );
   });
 
-  galleryClose?.addEventListener("click", closeGalleryLightbox);
-  galleryNext?.addEventListener("click", nextGalleryImage);
-  galleryPrev?.addEventListener("click", previousGalleryImage);
 
-  galleryLightbox.addEventListener("click", event => {
-    if (event.target === galleryLightbox) closeGalleryLightbox();
-  });
+  /* ===========================
+     Close / Navigation Buttons
+  =========================== */
 
-  document.addEventListener("keydown", event => {
-    if (!galleryLightbox.classList.contains("show")) return;
+  galleryClose?.addEventListener(
+    "click",
+    closeGalleryLightbox
+  );
 
-    if (event.key === "Escape") closeGalleryLightbox();
-    if (event.key === "ArrowRight") nextGalleryImage();
-    if (event.key === "ArrowLeft") previousGalleryImage();
-  });
+  galleryNext?.addEventListener(
+    "click",
+    nextGalleryImage
+  );
+
+  galleryPrev?.addEventListener(
+    "click",
+    previousGalleryImage
+  );
+
+
+  /* ===========================
+     Click Outside To Close
+  =========================== */
+
+  galleryLightbox.addEventListener(
+    "click",
+    event => {
+      if (event.target === galleryLightbox) {
+        closeGalleryLightbox();
+      }
+    }
+  );
+
+
+  /* ===========================
+     Keyboard Controls
+  =========================== */
+
+  document.addEventListener(
+    "keydown",
+    event => {
+      if (
+        !galleryLightbox.classList.contains("show")
+      ) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        closeGalleryLightbox();
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        nextGalleryImage();
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        previousGalleryImage();
+        return;
+      }
+
+      if (
+        event.key === "+" ||
+        event.key === "="
+      ) {
+        scale = Math.min(
+          MAX_SCALE,
+          scale + 0.5
+        );
+
+        limitImagePosition();
+        updateImageTransform();
+        return;
+      }
+
+      if (event.key === "-") {
+        scale = Math.max(
+          MIN_SCALE,
+          scale - 0.5
+        );
+
+        limitImagePosition();
+        updateImageTransform();
+      }
+    }
+  );
+
+
+  /* ===========================
+     Mouse Wheel Zoom
+     Desktop
+  =========================== */
+
+  galleryImage.addEventListener(
+    "wheel",
+    event => {
+      event.preventDefault();
+
+      const zoomSpeed = 0.15;
+
+      if (event.deltaY < 0) {
+        scale += zoomSpeed;
+      } else {
+        scale -= zoomSpeed;
+      }
+
+      scale = Math.max(
+        MIN_SCALE,
+        Math.min(MAX_SCALE, scale)
+      );
+
+      if (scale <= MIN_SCALE) {
+        scale = MIN_SCALE;
+        translateX = 0;
+        translateY = 0;
+      }
+
+      limitImagePosition();
+
+      galleryImage.style.transition =
+        "transform 0.05s ease";
+
+      updateImageTransform();
+    },
+    { passive: false }
+  );
+
+
+  /* ===========================
+     Desktop Mouse Drag
+  =========================== */
+
+  galleryImage.addEventListener(
+    "mousedown",
+    event => {
+      if (scale <= MIN_SCALE) return;
+
+      event.preventDefault();
+
+      isDragging = true;
+      moved = false;
+
+      startX = event.clientX;
+      startY = event.clientY;
+
+      lastX = translateX;
+      lastY = translateY;
+
+      galleryImage.style.transition =
+        "none";
+
+      galleryImage.classList.add(
+        "is-dragging"
+      );
+    }
+  );
+
+
+  document.addEventListener(
+    "mousemove",
+    event => {
+      if (!isDragging) return;
+
+      const dx =
+        event.clientX - startX;
+
+      const dy =
+        event.clientY - startY;
+
+      if (
+        Math.abs(dx) > 3 ||
+        Math.abs(dy) > 3
+      ) {
+        moved = true;
+      }
+
+      translateX =
+        lastX + dx;
+
+      translateY =
+        lastY + dy;
+
+      limitImagePosition();
+      updateImageTransform();
+    }
+  );
+
+
+  document.addEventListener(
+    "mouseup",
+    () => {
+      if (!isDragging) return;
+
+      isDragging = false;
+
+      galleryImage.classList.remove(
+        "is-dragging"
+      );
+
+      galleryImage.style.transition =
+        "transform 0.2s ease";
+    }
+  );
+
+
+  /* ===========================
+     Desktop Double Click Zoom
+  =========================== */
+
+  galleryImage.addEventListener(
+    "dblclick",
+    event => {
+      event.preventDefault();
+
+      if (scale > MIN_SCALE) {
+        resetGalleryZoom();
+        return;
+      }
+
+      scale = DOUBLE_TAP_SCALE;
+
+      translateX = 0;
+      translateY = 0;
+
+      galleryImage.style.transition =
+        "transform 0.25s ease";
+
+      updateImageTransform();
+    }
+  );
+
+
+  /* ===========================
+     Touch Start
+     Mobile / Tablet
+  =========================== */
+
+  galleryImage.addEventListener(
+    "touchstart",
+    event => {
+
+      /* Pinch Start */
+
+      if (event.touches.length === 2) {
+        isPinching = true;
+        isDragging = false;
+
+        const touch1 =
+          event.touches[0];
+
+        const touch2 =
+          event.touches[1];
+
+        initialDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+
+        initialScale = scale;
+
+        galleryImage.style.transition =
+          "none";
+
+        return;
+      }
+
+
+      /* Single Touch */
+
+      if (event.touches.length !== 1) return;
+
+      isPinching = false;
+      moved = false;
+
+      const touch =
+        event.touches[0];
+
+      startX = touch.clientX;
+      startY = touch.clientY;
+
+      lastX = translateX;
+      lastY = translateY;
+
+      if (scale > MIN_SCALE) {
+        isDragging = true;
+
+        galleryImage.style.transition =
+          "none";
+      } else {
+        isDragging = false;
+      }
+    },
+    { passive: true }
+  );
+
+
+  /* ===========================
+     Touch Move
+     Pinch / Drag
+  =========================== */
+
+  galleryImage.addEventListener(
+    "touchmove",
+    event => {
+
+      /* Pinch Zoom */
+
+      if (
+        event.touches.length === 2 &&
+        isPinching
+      ) {
+        event.preventDefault();
+
+        const touch1 =
+          event.touches[0];
+
+        const touch2 =
+          event.touches[1];
+
+        const currentDistance =
+          Math.hypot(
+            touch2.clientX -
+            touch1.clientX,
+
+            touch2.clientY -
+            touch1.clientY
+          );
+
+        const zoomRatio =
+          currentDistance /
+          initialDistance;
+
+        scale =
+          initialScale * zoomRatio;
+
+        scale = Math.max(
+          MIN_SCALE,
+          Math.min(
+            MAX_SCALE,
+            scale
+          )
+        );
+
+        if (scale <= MIN_SCALE) {
+          scale = MIN_SCALE;
+          translateX = 0;
+          translateY = 0;
+        }
+
+        limitImagePosition();
+
+        galleryImage.style.transition =
+          "none";
+
+        updateImageTransform();
+
+        return;
+      }
+
+
+      /* Drag Zoomed Image */
+
+      if (
+        event.touches.length === 1 &&
+        isDragging &&
+        scale > MIN_SCALE
+      ) {
+        event.preventDefault();
+
+        const touch =
+          event.touches[0];
+
+        const dx =
+          touch.clientX - startX;
+
+        const dy =
+          touch.clientY - startY;
+
+        if (
+          Math.abs(dx) > 3 ||
+          Math.abs(dy) > 3
+        ) {
+          moved = true;
+        }
+
+        translateX =
+          lastX + dx;
+
+        translateY =
+          lastY + dy;
+
+        limitImagePosition();
+        updateImageTransform();
+      }
+    },
+    { passive: false }
+  );
+
+
+  /* ===========================
+     Touch End
+     Swipe / Double Tap
+  =========================== */
+
+  galleryImage.addEventListener(
+    "touchend",
+    event => {
+
+      /* End Pinch */
+
+      if (isPinching) {
+        isPinching = false;
+
+        if (scale < 1.05) {
+          resetGalleryZoom();
+        }
+
+        return;
+      }
+
+      if (
+        !event.changedTouches ||
+        !event.changedTouches.length
+      ) {
+        return;
+      }
+
+      const touch =
+        event.changedTouches[0];
+
+      const endX =
+        touch.clientX;
+
+      const endY =
+        touch.clientY;
+
+      const deltaX =
+        endX - startX;
+
+      const deltaY =
+        endY - startY;
+
+      const SWIPE_DISTANCE = 60;
+
+
+      /* Swipe Image Navigation
+         Only When Not Zoomed */
+
+      if (
+        scale <= MIN_SCALE &&
+        Math.abs(deltaX) >= SWIPE_DISTANCE &&
+        Math.abs(deltaX) >
+        Math.abs(deltaY)
+      ) {
+        if (deltaX < 0) {
+          nextGalleryImage();
+        } else {
+          previousGalleryImage();
+        }
+
+        return;
+      }
+
+
+      /* Stop Drag */
+
+      if (isDragging) {
+        isDragging = false;
+
+        galleryImage.style.transition =
+          "transform 0.2s ease";
+
+        return;
+      }
+
+
+      /* Double Tap Zoom */
+
+      const currentTime =
+        Date.now();
+
+      const tapDelay =
+        currentTime -
+        lastTapTime;
+
+      if (
+        tapDelay > 0 &&
+        tapDelay < 300 &&
+        !moved
+      ) {
+        if (scale > MIN_SCALE) {
+          resetGalleryZoom();
+        } else {
+          scale = DOUBLE_TAP_SCALE;
+
+          translateX = 0;
+          translateY = 0;
+
+          galleryImage.style.transition =
+            "transform 0.25s ease";
+
+          updateImageTransform();
+        }
+
+        lastTapTime = 0;
+      } else {
+        lastTapTime =
+          currentTime;
+      }
+    },
+    { passive: true }
+  );
+
+
+  /* ===========================
+     Touch Cancel
+  =========================== */
+
+  galleryImage.addEventListener(
+    "touchcancel",
+    () => {
+      isDragging = false;
+      isPinching = false;
+
+      galleryImage.style.transition =
+        "transform 0.2s ease";
+    },
+    { passive: true }
+  );
+
+
+  /* ===========================
+     Prevent Browser Image Drag
+  =========================== */
+
+  galleryImage.addEventListener(
+    "dragstart",
+    event => {
+      event.preventDefault();
+    }
+  );
 }
+
