@@ -2478,392 +2478,72 @@ if (galleryCards.length && galleryLightbox) {
   );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+/* =========================================
+   HAPPY DIWALI INTRO JAVASCRIPT
+========================================= */
 
-  // Start immediately
-  const overlay = document.createElement("div");
-  overlay.id = "diwali-opening";
+(() => {
 
-  // Golden star positions
-  const starPositions = [
-    [9, 13], [29, 23], [49, 10], [69, 18], [89, 28],
-    [19, 70], [39, 83], [59, 76], [79, 64], [96, 82],
-    [7, 48], [25, 43], [74, 43], [85, 89], [51, 94]
-  ];
+  function initDiwaliAnimation() {
 
-  overlay.innerHTML = `
-        <div class="diwali-bg"></div>
-        <div class="diwali-rays"></div>
+    const intro = document.getElementById("diwali-opening");
 
-        <div class="diwali-particles">
-            ${starPositions.map((pos, i) => `
-                <span style="
-                    left:${pos[0]}%;
-                    top:${pos[1]}%;
-                    --delay:${i * 0.12}s;
-                ">✦</span>
-            `).join("")}
-        </div>
+    if (!intro) return;
 
-        <div class="diwali-center">
+    const particles = intro.querySelector(".diwali-particles");
 
-            <div class="diwali-title">
-                HAPPY<br>
-                <span>DIWALI</span>
-            </div>
+    // Generate randomly scattered stars
+    if (particles) {
 
-            <div class="diwali-line"></div>
+      particles.innerHTML = "";
 
-        </div>
-    `;
+      const starCount = 45;
 
-  const css = document.createElement("style");
+      for (let i = 0; i < starCount; i++) {
 
-  css.textContent = `
+        const star = document.createElement("span");
 
-        /* MAIN OVERLAY */
+        const size = 4 + Math.random() * 9;
+        const duration = 2 + Math.random() * 3;
+        const delay = Math.random() * 4;
 
-        #diwali-opening {
-            position: fixed;
-            inset: 0;
-            z-index: 9999999;
-            overflow: hidden;
+        star.style.left = Math.random() * 98 + "%";
+        star.style.top = Math.random() * 96 + "%";
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        star.style.setProperty("--star-size", size + "px");
+        star.style.setProperty("--star-duration", duration + "s");
+        star.style.setProperty("--star-delay", delay + "s");
 
-            background: #7c2000;
-            opacity: 1;
-        }
+        particles.appendChild(star);
+      }
+    }
 
-        /* BACKGROUND */
-
-        .diwali-bg {
-            position: absolute;
-            inset: -30%;
-
-            background:
-                radial-gradient(
-                    ellipse at 50% 45%,
-                    #ffbd36 0%,
-                    #ff9517 20%,
-                    #e65b00 43%,
-                    #a93200 70%,
-                    #641900 100%
-                );
-
-            animation:
-                backgroundZoom 5s ease-in-out infinite alternate;
-        }
-
-        /* GOLDEN RAYS */
-
-        .diwali-rays {
-            position: absolute;
-            inset: -100%;
-
-            background: repeating-conic-gradient(
-                from 0deg at 50% 50%,
-                transparent 0deg,
-                rgba(255,221,126,.16) 2deg,
-                transparent 5deg,
-                transparent 15deg
-            );
-
-            animation:
-                raysRotate 35s linear infinite;
-        }
-
-        /* STARS */
-
-        .diwali-particles {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-
-        .diwali-particles span {
-            position: absolute;
-            display: block;
-
-            color: #ffe6a0;
-            font-size: 17px;
-            line-height: 1;
-
-            opacity: 0;
-
-            text-shadow: 0 0 8px #ffedaa;
-
-            animation:
-                starAppear 1.2s ease-out var(--delay) both,
-                starGlow 1.8s ease-in-out calc(var(--delay) + 1.2s) infinite alternate;
-        }
-
-        /* CENTER */
-
-        .diwali-center {
-            position: relative;
-            z-index: 3;
-
-            text-align: center;
-            padding: 20px;
-            width: 100%;
-
-            animation:
-                textEntrance 2.2s cubic-bezier(.22,1,.36,1) both;
-        }
-
-        /* HAPPY DIWALI TEXT */
-
-        .diwali-title {
-            font-family: Georgia, 'Times New Roman', serif;
-
-            font-size: clamp(65px, 12vw, 140px);
-            font-weight: 900;
-
-            line-height: .92;
-            letter-spacing: 3px;
-
-            color: #fff0b5;
-
-            text-shadow:
-                0 3px 0 #a65b08,
-                0 0 12px #ffda73;
-
-            animation:
-                titleGlow 2.2s ease-in-out 2s infinite alternate;
-        }
-
-        /* GOLD DIWALI TEXT */
-
-        .diwali-title span {
-            display: inline-block;
-
-            background: linear-gradient(
-                180deg,
-                #fff9d5 0%,
-                #ffdf75 30%,
-                #ffbd36 60%,
-                #d47b08 100%
-            );
-
-            background-size: 100% 200%;
-
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-
-            filter:
-                drop-shadow(0 0 8px rgba(255,190,55,.6));
-
-            animation:
-                goldShimmer 3s ease-in-out infinite alternate;
-        }
-
-        /* UNDERLINE */
-
-        .diwali-line {
-            width: min(300px, 55vw);
-            height: 2px;
-
-            margin: 35px auto 0;
-
-            background: linear-gradient(
-                90deg,
-                transparent,
-                #ffe6a0,
-                transparent
-            );
-
-            box-shadow: 0 0 12px #ffda73;
-
-            animation:
-                lineGlow 2s ease-in-out infinite alternate;
-        }
-
-        /* BACKGROUND ZOOM */
-
-        @keyframes backgroundZoom {
-            from {
-                transform: scale(1);
-            }
-
-            to {
-                transform: scale(1.1);
-            }
-        }
-
-        /* SLOW RAY ROTATION */
-
-        @keyframes raysRotate {
-            from {
-                transform: rotate(0deg);
-                opacity: .5;
-            }
-
-            to {
-                transform: rotate(360deg);
-                opacity: .9;
-            }
-        }
-
-        /* TEXT ENTRANCE */
-
-        @keyframes textEntrance {
-            0% {
-                transform: scale(.72) translateY(20px);
-                opacity: 0;
-                filter: blur(10px);
-            }
-
-            70% {
-                transform: scale(1.035) translateY(0);
-                opacity: 1;
-                filter: blur(0);
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-                filter: blur(0);
-            }
-        }
-
-        /* CONTINUOUS TEXT GLOW */
-
-        @keyframes titleGlow {
-            from {
-                text-shadow:
-                    0 3px 0 #a65b08,
-                    0 0 12px #ffda73,
-                    0 0 25px rgba(255,183,46,.5);
-
-                filter: brightness(.95);
-            }
-
-            to {
-                text-shadow:
-                    0 3px 0 #a65b08,
-                    0 0 18px #fff0a5,
-                    0 0 40px #ffbd36,
-                    0 0 65px rgba(255,140,0,.8);
-
-                filter: brightness(1.18);
-            }
-        }
-
-        /* GOLDEN SHIMMER */
-
-        @keyframes goldShimmer {
-            from {
-                background-position: 50% 0%;
-                filter:
-                    drop-shadow(0 0 7px rgba(255,190,55,.5));
-            }
-
-            to {
-                background-position: 50% 100%;
-                filter:
-                    drop-shadow(0 0 20px rgba(255,230,140,.95));
-            }
-        }
-
-        /* STAR ENTRANCE */
-
-        @keyframes starAppear {
-            0% {
-                transform: scale(0) rotate(-45deg);
-                opacity: 0;
-            }
-
-            70% {
-                transform: scale(1.3) rotate(15deg);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1) rotate(0);
-                opacity: .9;
-            }
-        }
-
-        /* CONTINUOUS STAR GLOW */
-
-        @keyframes starGlow {
-            from {
-                transform: scale(.85);
-                opacity: .45;
-                filter: brightness(.8)
-                        drop-shadow(0 0 3px #ffcf58);
-            }
-
-            to {
-                transform: scale(1.25);
-                opacity: 1;
-                filter: brightness(1.5)
-                        drop-shadow(0 0 13px #ffe6a0);
-            }
-        }
-
-        /* LINE GLOW */
-
-        @keyframes lineGlow {
-            from {
-                opacity: .55;
-                box-shadow: 0 0 5px #ffbd36;
-            }
-
-            to {
-                opacity: 1;
-                box-shadow: 0 0 20px #fff0a5;
-            }
-        }
-
-        /* MOBILE */
-
-        @media(max-width:480px) {
-            .diwali-title {
-                font-size: clamp(48px, 13vw, 75px);
-                letter-spacing: 1px;
-            }
-
-            .diwali-line {
-                margin-top: 22px;
-            }
-
-            .diwali-particles span {
-                font-size: 13px;
-            }
-        }
-
-        /* ACCESSIBILITY */
-
-        @media(prefers-reduced-motion:reduce) {
-            #diwali-opening,
-            #diwali-opening * {
-                animation: none !important;
-            }
-        }
-
-    `;
-
-  document.head.appendChild(css);
-  document.body.appendChild(overlay);
-
-  // Keep all animations running for 5 seconds
-  setTimeout(() => {
-
-    // Fade the complete celebration smoothly
-    overlay.style.transition = "opacity 1.5s ease-in-out";
-    overlay.style.opacity = "0";
-
+    // Display for 5 seconds
     setTimeout(() => {
-      overlay.remove();
-      css.remove();
-    }, 1500);
 
-  }, 2000);
+      intro.classList.add("hide");
 
-});
+      // Remove after 1.5 seconds
+      setTimeout(() => {
+        intro.remove();
+      }, 1500);
 
+    }, 2000);
+
+  }
+
+  if (document.readyState === "loading") {
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      initDiwaliAnimation,
+      { once: true }
+    );
+
+  } else {
+
+    initDiwaliAnimation();
+
+  }
+
+})();
