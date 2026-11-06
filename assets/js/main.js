@@ -2477,3 +2477,73 @@ if (galleryCards.length && galleryLightbox) {
     }
   );
 }
+
+/* =========================================
+   HAPPY DIWALI INTRO JAVASCRIPT
+========================================= */
+
+(() => {
+
+  function initDiwaliAnimation() {
+
+    const intro = document.getElementById("diwali-opening");
+
+    if (!intro) return;
+
+    const particles = intro.querySelector(".diwali-particles");
+
+    // Generate randomly scattered stars
+    if (particles) {
+
+      particles.innerHTML = "";
+
+      const starCount = 45;
+
+      for (let i = 0; i < starCount; i++) {
+
+        const star = document.createElement("span");
+
+        const size = 4 + Math.random() * 9;
+        const duration = 2 + Math.random() * 3;
+        const delay = Math.random() * 4;
+
+        star.style.left = Math.random() * 98 + "%";
+        star.style.top = Math.random() * 96 + "%";
+
+        star.style.setProperty("--star-size", size + "px");
+        star.style.setProperty("--star-duration", duration + "s");
+        star.style.setProperty("--star-delay", delay + "s");
+
+        particles.appendChild(star);
+      }
+    }
+
+    // Display for 5 seconds
+    setTimeout(() => {
+
+      intro.classList.add("hide");
+
+      // Remove after 1.5 seconds
+      setTimeout(() => {
+        intro.remove();
+      }, 1500);
+
+    }, 2000);
+
+  }
+
+  if (document.readyState === "loading") {
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      initDiwaliAnimation,
+      { once: true }
+    );
+
+  } else {
+
+    initDiwaliAnimation();
+
+  }
+
+})();
